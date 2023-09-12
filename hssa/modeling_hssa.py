@@ -385,6 +385,10 @@ class HSSAModel(HSSAPreTrainedModel):
             utterance_mask
         )
 
+        if self.config.pool_utterances:
+            hidden_states = torch.mean(hidden_states, dim=1)
+            hidden_states /= torch.linalg.norm(hidden_states, dim=0)
+
         return hidden_states
 
     def get_input_embeddings(self):
