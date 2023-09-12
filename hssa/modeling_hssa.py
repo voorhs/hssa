@@ -102,10 +102,17 @@ class SegmentUpdater(nn.Module):
         return hidden_states
 
 
-def get_extended_attention_mask(attention_mask):
+def get_extended_attention_mask(attention_mask, is_casual=False):
     if len(attention_mask.shape) == 2:
+        if is_casual:
+            _, T = attention_mask.shape
+            tril = torch.tril(attention_mask.new_ones(1, T, T))
+            attention_mask = attention_mask[:, None, :] * tril
+            return attention_mask[:, None, :, :]
         return attention_mask[:, None, None, :]
     elif len(attention_mask.shape) == 3:
+        if is_casual:
+            raise TypeError('`is_casual=True` is incompatible with custom 3D attention mask')
         return attention_mask[:, None, :, :]
 
 
@@ -119,6 +126,8 @@ class HSSAAttention(nn.Module):
         self.bpooler = SegmentPooler(config)
         self.updater = SegmentUpdater(config)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+
+        self.config = config
         
     def forward(
         self,
@@ -153,7 +162,7 @@ class HSSAAttention(nn.Module):
         # utterances iteraction 
         utterance_states = self.attn(
             utterance_states,
-            attention_mask=get_extended_attention_mask(utterance_mask)
+            attention_mask=get_extended_attention_mask(utterance_mask, is_casual=self.config.casual_utterance_attention)
         )[0]
 
         # (B*S, T, d), update the token hidden states with corresponding utterance states
