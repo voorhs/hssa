@@ -49,6 +49,6 @@ class HSSATokenizer(MPNetTokenizerFast):
             uts_mask.append([1] * len(dia) + [0] * (max_dia_len - len(dia)))
         
         tok_res = tokenizer(uts, padding='longest', return_tensors='pt')
-        tok_res['segment_size'] = max_dia_len
+        tok_res['max_dia_len'] = torch.tensor([max_dia_len])
         tok_res['utterance_mask'] = torch.tensor(uts_mask)
         return tok_res
