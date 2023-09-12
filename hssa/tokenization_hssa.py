@@ -1,7 +1,5 @@
 from transformers.models.mpnet.tokenization_mpnet_fast import MPNetTokenizerFast
 from transformers.tokenization_utils import AddedToken
-import numpy as np
-from collections import defaultdict
 import torch
 
 
@@ -48,7 +46,7 @@ class HSSATokenizer(MPNetTokenizerFast):
                 uts.append(role_token + item['utterance'])
             for _ in range(max_dia_len - len(dia)):
                 uts.append('')
-            uts_mask.extend([1] * len(dia) + [0] * (max_dia_len - len(dia)))
+            uts_mask.append([1] * len(dia) + [0] * (max_dia_len - len(dia)))
         
         tok_res = tokenizer(uts, padding='longest', return_tensors='pt')
         tok_res['segment_size'] = max_dia_len
